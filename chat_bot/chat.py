@@ -5,11 +5,11 @@ from extract_trajectories_helpers.extract_helpers import print_to_file
 
 class Chat:
 
-    def __init__(self):
+    def __init__(self,debug=False):
         """
         Sets up the api necessary to communicate with open AI
         """
-
+        self.debug = debug
         # Open AI information
         self._openai_deployment = "gpt4oNice"  # newVersionUpdate
         self._openai_version = "2024-02-15-preview"  # newVersionUpdate
@@ -44,13 +44,15 @@ class Chat:
         openai.api_key = self._openai_key
 
     def send_message(self, message=None):
-        print("Message Received")
+        if self.debug:
+            print("Message Received")
         if message is None:
             return "Not a valid Message. Try again"
 
         self._message_history.append({"role": "user", "content": message})
         self._message_latest = dict(self._communicate())
-        print("Message Processing")
+        if self.debug:
+            print("Message Processing")
         return self._process_message()
 
     def _communicate(self):

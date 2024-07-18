@@ -1,3 +1,5 @@
+import time
+
 import dill as pickle
 from chat import Chat
 import tkinter as tk
@@ -8,6 +10,7 @@ import os, sys, subprocess
 
 class ChatInteract:
     def __init__(self):
+        self.demo_mode = False
         # Values of the program
         self.options = {"Save Chat": False,
                         "Save JSON": True,
@@ -18,10 +21,10 @@ class ChatInteract:
         self.starting_text = "Please describe the json trajectory you would like the LLM to create:\n"
         # The window
         self.window = tk.Tk()
-        self.font_size = 16
+        self.font_size = 18
         self.font = font.Font(size=self.font_size)
         # Params for chat
-        self.chat = Chat()
+        self.chat = Chat(debug=True)
         self.active_response = None
 
         # Create the screen
@@ -40,12 +43,9 @@ class ChatInteract:
         self.window.grid_columnconfigure(1, weight=1)
 
         # Welcome text at top
-        self.elements["title"] = tk.Label(self.window, text="Welcome to the NICE Large Language Model", font=('', 35))
+        self.elements["title"] = tk.Label(self.window, text="Welcome to the NICE Large Language Model",
+                                          font=('', int(self.font_size * 1.75)))
         self.elements["title"].grid(row=0, column=0, columnspan=100, padx=self.default_padx, pady=(20, 5))
-        # # Into Label and directors
-        # self.elements["title_label"] = tk.Label(self.window, text="Type a prompt to get started", font=self.font)
-        # self.elements["title_label"].grid(row=1, column=1, columnspan=100, padx=self.default_padx, pady=(5, 20),
-        #                                   sticky='W')
 
         self.create_scrolling_text_view()
 
@@ -77,28 +77,47 @@ class ChatInteract:
                                           ipadx=5, ipady=5)
         self.update_menu()
 
-        # Create a frame for the left buttons
-        left_button_frame = tk.Frame(self.window)
-        left_button_frame.grid(row=2, column=0, sticky='n', padx=self.default_padx, pady=self.default_padx)
-        text = [""] * 4
-        text[0] = "Question 1"
-        text[1] = "Question 2"
-        text[2] = "Question 3"
-        text[3] = "Question 4"
+        if self.demo_mode:
+            # Create a frame for the left buttons
+            left_button_frame = tk.Frame(self.window)
+            left_button_frame.grid(row=2, column=0, sticky='n', padx=self.default_padx, pady=self.default_padx)
+            # # Into Label and directors
+            self.elements["title_label"] = tk.Label(left_button_frame, text="Try an example prompt:", font=self.font)
+            self.elements["title_label"].grid(row=0, column=0, columnspan=100, padx=self.default_padx, pady=(5, 20),
+                                              sticky='W')
 
-        # Add four buttons to the left side
-        self.elements["button0"] = tk.Button(left_button_frame, text=text[0], font=self.font,
-                                             command=lambda: self.temp(0),width=30, wraplength=self.font_size * 23)
-        self.elements["button0"].grid(row=0, column=0, pady=5, ipadx=5, ipady=5)
-        self.elements["button1"] = tk.Button(left_button_frame, text=text[1], font=self.font,
-                                             command=lambda: self.temp(0),width=30, wraplength=self.font_size * 23)
-        self.elements["button1"].grid(row=1, column=0, pady=5, ipadx=5, ipady=5)
-        self.elements["button2"] = tk.Button(left_button_frame, text=text[2], font=self.font,
-                                             command=lambda: self.temp(0),width=30, wraplength=self.font_size * 23)
-        self.elements["button2"].grid(row=2, column=0, pady=5, ipadx=5, ipady=5)
-        self.elements["button3"] = tk.Button(left_button_frame, text=text[3], font=self.font,
-                                             command=lambda: self.temp(0),width=30, wraplength=self.font_size * 23)
-        self.elements["button3"].grid(row=3, column=0, pady=5, ipadx=5, ipady=5)
+            text = [""] * 5
+            text[0] = ("Create a json trajectory with prefix angleChecks...sample angle from 1 to 1.96 with a step of "
+                       "0.08...")
+            text[1] = ("Create a json trajectory with prefix apertureChecks...sets slitAperture1 to 0.4 times the "
+                       "sample angle...")
+            text[2] = "Create a json trajectory with prefix mb111 with description “5.4kG mq PSD..."
+            text[3] = ("Create a json trajectory with prefix live.sample.name...loops through sampleAngle from -1 to 2 "
+                       "with step of 0.0075...")
+            text[4] = ("Create a json trajectory for the magik instrument that that loop through sample angle from 2 "
+                       "to 4 with a step of 0.1 that sets slitAperture1 to 0.4 times the sample angle")
+
+            # Add four buttons to the left side
+            self.elements["button0"] = tk.Button(left_button_frame, text=text[0], font=self.font,
+                                                 command=lambda: self.question_buttons_submit(0), width=30,
+                                                 wraplength=self.font_size * 23)
+            self.elements["button0"].grid(row=1, column=0, pady=5, ipadx=5, ipady=5)
+            self.elements["button1"] = tk.Button(left_button_frame, text=text[1], font=self.font,
+                                                 command=lambda: self.question_buttons_submit(1), width=30,
+                                                 wraplength=self.font_size * 23)
+            self.elements["button1"].grid(row=2, column=0, pady=5, ipadx=5, ipady=5)
+            self.elements["button2"] = tk.Button(left_button_frame, text=text[2], font=self.font,
+                                                 command=lambda: self.question_buttons_submit(2), width=30,
+                                                 wraplength=self.font_size * 23)
+            self.elements["button2"].grid(row=3, column=0, pady=5, ipadx=5, ipady=5)
+            self.elements["button3"] = tk.Button(left_button_frame, text=text[3], font=self.font,
+                                                 command=lambda: self.question_buttons_submit(3), width=30,
+                                                 wraplength=self.font_size * 23)
+            self.elements["button3"].grid(row=4, column=0, pady=5, ipadx=5, ipady=5)
+            self.elements["button4"] = tk.Button(left_button_frame, text=text[4], font=self.font,
+                                                 command=lambda: self.question_buttons_submit(4), width=30,
+                                                 wraplength=self.font_size * 23)
+            self.elements["button4"].grid(row=5, column=0, pady=5, ipadx=5, ipady=5)
 
     def clear_chat(self):
         self.chat.clear_chat()
@@ -169,7 +188,15 @@ class ChatInteract:
     def _download_json(self):
         print("Saving JSON")
         name = "JSON"
-        text_to_save = self.active_response[self.active_response.find("{"):self.active_response.rfind("}") + 1]
+        text_to_save = self.active_response[self.active_response.find("@#@$@%@^@") + 9:self.active_response.rfind(
+            "@#@$@%@^@")]
+        jnum = text_to_save.find("'''json")
+        if jnum != -1:
+            text_to_save = text_to_save[jnum + 7:]
+
+        jnum = text_to_save.find("'''")
+        if jnum != -1:
+            text_to_save = text_to_save[:jnum]
         prefix = text_to_save.find("filePrefix")
         if prefix != -1:
             prefix = text_to_save[prefix + 11:]
@@ -225,8 +252,34 @@ class ChatInteract:
         except Exception as e:
             self.update_text_view(bold="\n\nSystem:", red_text=f"Failed to open file: {e}\n")
 
-    def temp(self, num):
-        pass
+    def question_buttons_submit(self, num):
+        self.clear_chat()
+        prompt = ""
+        if num == 0:
+            prompt = ("Create a json trajectory with prefix angleChecks with description “this is a file that "
+                      "checks angle” that loop through sample angle from 1 to 1.96 with a step of 0.08 and "
+                      "detector angle from 2 to 3.92 with a step of 0.16. “init” section should contain a count "
+                      "against TIME and time and monitor counters at 40 and nothing else.")
+        elif num == 1:
+            prompt = ("Create a json trajectory with prefix apertureChecks with description “this loops through "
+                      "apertures” that loop through sample angle from 2 to 4 with a step of 0.1 that sets "
+                      "slitAperture1 to 0.4 times the sample angle. “init” section should contain a count against "
+                      "TIME and set prefac to 2 and nothing else.")
+        elif num == 2:
+            prompt = ("Create a json trajectory with prefix mb111 with description “5.4kG mq PSD” that loop through "
+                      "detector angle from 0.8 to 2 with a step of 0.1 as well as looping through slitAperture1 from "
+                      "1 to 1 with step of 0. “init” section should contain down set to down and up set to up and a "
+                      "count against TIME.")
+        elif num == 3:
+            prompt = ("Create a json trajectory with prefix live.sample.name with description “'transverse 5+5um "
+                      "stripes'” that loops through sampleAngle from -1 to 2 with step of 0.0075. “init” section "
+                      "should contain detector angle set to 1.24 and a count against TIME.")
+        else:
+            prompt = ("Create a json trajectory for the magik instrument that that loop through sample angle from 2 to "
+                      "4 with a step of 0.1 that sets slitAperture1 to 0.4 times the sample angle")
+        self.elements["prompt_input"].delete(0, tk.END)
+        self.elements["prompt_input"].insert(0, prompt)
+        self.submit_prompt()
 
     def create_scrolling_text_view(self):
         # Create the main frame
