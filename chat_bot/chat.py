@@ -1,11 +1,11 @@
-import openai, os, requests
-from openai import AzureOpenAI
-from extract_trajectories_helpers.extract_helpers import print_to_file
+import openai
+import os
+from openai import AzureOpenAI, BadRequestError
 
 
 class Chat:
 
-    def __init__(self,debug=False):
+    def __init__(self, debug=False):
         """
         Sets up the api necessary to communicate with open AI
         """
@@ -50,7 +50,11 @@ class Chat:
             return "Not a valid Message. Try again"
 
         self._message_history.append({"role": "user", "content": message})
-        self._message_latest = dict(self._communicate())
+        try:
+            self._message_latest = dict(self._communicate())
+        except BadRequestError as e:
+            if "Free Semantic Usage exceeded" in str(e):
+                self._message_latest = "Semantic search usage limit exceeded. Contact the developer."
         if self.debug:
             print("Message Processing")
         return self._process_message()
@@ -132,10 +136,12 @@ class Chat:
         self._message_history = [{"role": "system", "content": self._message_system}]
 
     def _process_message(self):
-        self.current_message = dict(self._message_latest.get("choices", {})[0])
+        if isinstance(self._message_latest, str):
+            self._message_latest = {self._message_latest: ""}
+        self.current_message = dict(self._message_latest.get("choices", [{}])[0])
         self.current_message = dict(self.current_message.get("message", {}))
-        llm_response = self.current_message.get("content", {})
+        llm_response = self.current_message.get("content", None)
         if llm_response is None:
-            return "Message Formatted improperly"
+            return "Message Formatted improperly:" + str(self._message_latest)
         self._message_history.append({"role": "assistant", "content": llm_response})
         return str(llm_response)

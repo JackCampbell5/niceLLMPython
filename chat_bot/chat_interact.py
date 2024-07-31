@@ -1,6 +1,4 @@
 import time
-
-import dill as pickle
 from chat import Chat
 import tkinter as tk
 from tkinter import ttk, font, filedialog
@@ -10,7 +8,7 @@ import os, sys, subprocess
 
 class ChatInteract:
     def __init__(self):
-        self.demo_mode = False
+        self.demo_mode = True
         # Values of the program
         self.options = {"Save Chat": False,
                         "Save JSON": True,

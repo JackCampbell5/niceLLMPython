@@ -1,8 +1,9 @@
-import requests, zipfile, io
-from datetime import datetime
-from extract_helpers import *
+import zipfile, io
+from helper_methods.extract_helpers import *
 
 ret_dict = {}
+
+"""Takes files form the online API and exports them ot Azure and the local files"""
 
 
 def extract_data(offset, limit, instrument, dir_name, ext="", output=True, all=0):

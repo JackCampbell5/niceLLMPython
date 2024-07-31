@@ -1,18 +1,21 @@
 from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
 import os, tempfile
-from extractTraj.extract_helpers import print_error, create_id_dict
+from helper_methods.extract_helpers import print_error, create_id_dict
+
+"""
+Loops through files in the directory setting the azure meta data based on what is contained in the first line. 
+Deletes the first line when done.
+"""
 
 # Constants
 STORAGE_ACCOUNT_NAME = "nicellmstorage"
-ACCOUNT_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 CONTAINER_NAME = "trajectories"
 count_max = 0
 
 # Connection string connection_string = f"DefaultEndpointsProtocol=https;AccountName={
 # STORAGE_ACCOUNT_NAME};AccountKey={ACCOUNT_KEY};EndpointSuffix=core.windows.net"
-connection_string = ("DefaultEndpointsProtocol=https;AccountName=nicellmstorage;AccountKey=x"
-                     "/fdM3T0wJxmrjf0ihIkqjSRXpk3fnACnRfjHZOeJxZififUrXgz8W5L5FlQ/JTs1ChMRHyqru4y+ASthh9JZg"
-                     "==;EndpointSuffix=core.windows.net")
+connection_string = os.getenv("AZURE_STORAGE_CONNECT")
+
 
 # Create the BlobServiceClient object
 blob_service_client = BlobServiceClient.from_connection_string(connection_string)

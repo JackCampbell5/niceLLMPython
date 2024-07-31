@@ -1,0 +1,4 @@
+openai~=1.33.0
+requests~=2.32.3 #Used to extract training data files from server
+numpy~=2.0.0
+networkx~=3.3 # Graphs and similarity calculations
